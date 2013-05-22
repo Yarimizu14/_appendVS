@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript">
+
+(function() {
+
+/**
+*	append対決 : 5種類のDOMへの要素追加方法を比較する。
+*   innerHTML VS innerText VS  DocumentFragment VS 
+*	createContextualFragment VS insertAdjacentHTML
+*/
+window.document.addEventListener("DOMContentLoaded", function() {
+	
+	//比較するために実行するappendの回数
+	var N = 10000;
+	//N回追加する文字列
+	var str = 'test test test';
+	//要素追加の対象となるElement
+	var ul = document.getElementById("target-node");
+
+	//innerHTML
+	console.time('innerHTML');
+	_innerHTML(N, ul, str);
+	console.timeEnd('innerHTML');
+
+	//innerText
+	ul.innerHTML = "";
+	console.time('innerText');
+	_innerText(N, ul, str);
+	console.timeEnd('innerText');
+
+	//DocumentFragment with innerHTML
+	ul.innerHTML = "";
+	console.time('_fragment_innerHTML');
+	_fragment_innerHTML(N, ul, str);
+	console.timeEnd('_fragment_innerHTML');
+
+	//DocumentFragment with innerText
+	ul.innerHTML = "";
+	console.time('_fragment_innerText');
+	_fragment_innerText(N, ul, str);
+	console.timeEnd('_fragment_innerText');
+
+	//insertAdjacentHTML
+	ul.innerHTML = "";
+	console.time('inserAdjacentHTML');
+	_insertAdjacentHTML(N, ul, str);
+	console.timeEnd('inserAdjacentHTML');
+
+	//createContextualFragment1
+	ul.innerHTML = "";
+	console.time('createContextualFragment1');
+	_createContextualFragment1(N, ul, str);
+	console.timeEnd('createContextualFragment1');
+
+	//createContextualFragment2
+	ul.innerHTML = "";
+	console.time('createContextualFragment2');
+	_createContextualFragment2(N, ul, str);
+	console.timeEnd('createContextualFragment2');
+
+	/*
+	//createContextualFragment3
+	ul.innerHTML = "";
+	console.time('createContextualFragment3');
+	_createContextualFragment3(N, ul, str);
+	console.timeEnd('createContextualFragment3');
+	*/
+});
+
+/*
+*	_innerHTML  : innerHTMLで追加する
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _innerHTML = function(N, el, str) {
+	for (var i = 0; i < N; i++) {
+	  var liTag = document.createElement('li');
+	  liTag.innerHTML = i + " " + str;
+	  //el.appendChild(liTag);
+	};
+}
+
+/*
+*	_innerText  : innerTextで追加する
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _innerText = function(N, el, str) {
+	for (var i = 0; i < N; i++) {
+	  var liTag = document.createElement('li');
+	  liTag.innerText = i + " " + str;
+	  el.appendChild(liTag);
+	};
+}
+
+/*
+*	_fragment_innerHTML : innerHTMLで編集したDOMをDocumentFragmentで追加する。
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _fragment_innerHTML = function(N, el, str) {
+	var fragment = document.createDocumentFragment();
+	for (var i = 0; i < N; i++) {
+	  var liTag = document.createElement('li');
+	  liTag.innerHTML = i + " " + str;
+	  fragment.appendChild(liTag);
+	};
+	el.appendChild(fragment);
+}
+
+/*
+*	_fragment_innerText : innerTextで編集したDOMをDocumentFragmentで追加する。
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _fragment_innerText = function(N, el, str) {
+	var fragment = document.createDocumentFragment();
+	for (var i = 0; i < N; i++) {
+	  var liTag = document.createElement('li');
+	  liTag.innerText = i + " " + str;
+	  fragment.appendChild(liTag);
+	};
+	el.appendChild(fragment);
+}
+
+/*
+*	_insertAdjacentHTML : 
+*   -- insertAdjacentHTML(where, text)
+*                    where -> BeforeBegin, AfterBegin, BeforeEnd, AfterEnd
+*					 text  -> 追加するHTMLテキスト
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _insertAdjacentHTML = function(N, el, str) {
+	for (var i = 0; i < N; i++) {
+		var liTag = "<li>" + i + " " + str + "</li>";
+		el.insertAdjacentHTML("Afterend", liTag);
+	}
+}
+
+/*
+*	_createContextualFragment1 : createContextualFragmentでHTMLテキストを追加する
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _createContextualFragment1 = function(N, el, str) {
+	var range = document.createRange();
+	range.selectNodeContents(el);				//この一文がないとFireFox以外では動かない
+	var fragment;
+	for (var i = 0; i < N; i++) {
+		var liTag = "<li>" + str + "</li>";
+		fragment = range.createContextualFragment(liTag);
+		range.insertNode(fragment);				//insertNodeで追加する
+	}
+}
+
+/*
+*	_createContextualFragment2 : createContextualFragmentでHTMLテキストを追加する
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _createContextualFragment2 = function(N, el, str) {
+	var range = document.createRange();
+	range.selectNodeContents(el);				//この一文がないとFireFox以外では動かない
+	var fragment;
+	for (var i = 0; i < N; i++) {
+		var liTag = "<li>" + str + "</li>";
+		fragment = range.createContextualFragment(liTag);
+		el.appendChild(fragment);				//appendで追加する
+	}
+	range.detach();
+}
+
+/*
+*	_createContextualFragment3 : createContextualFragmentでHTMLテキストを追加する
+*	@params N   : 追加する回数
+*	@params el  : 追加対象要素
+*	@params str : 追加する文字列
+*/
+var _createContextualFragment3 = function(N, el, str) {
+	for (var i = 0; i < N; i++) {
+		var range = document.createRange();
+		range.selectNodeContents(el);			//この一文がないとFireFox以外では動かない
+		var liTag = "<li>" + str + "</li>";
+		var fragment = range.createContextualFragment(liTag);
+		range.insertNode(fragment);
+	}
+}
+
+
+})();
+
+</script>
+</head>
+
+<body>
+	<ul id="target-node"></ul>
+</body>
+
+</html>
